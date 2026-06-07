@@ -208,6 +208,7 @@ def load_models():
 movies, movie_details, tfidf_similarity, glove_similarity, svd, links = load_models()
 
 # ── TMDB Fetcher ─────────────────────────────────────
+@st.cache_data
 def get_movie_details_tmdb(movie_id):
     tmdb_id = links[links['movieId'] == movie_id]['tmdbId'].values
     if len(tmdb_id) == 0:
@@ -269,9 +270,9 @@ if recommend_btn:
 
                 # Poster
                 if poster:
-                    st.image(poster, use_column_width=True)
+                    st.image(poster, use_container_width=True)
                 else:
-                    st.image("https://via.placeholder.com/300x450/1a1a1a/666666?text=No+Poster", use_column_width=True)
+                    st.image("https://via.placeholder.com/300x450/1a1a1a/666666?text=No+Poster", use_container_width=True)
 
                 # Info
                 st.markdown(f'<div class="movie-title">{rec["title"]}</div>', unsafe_allow_html=True)
