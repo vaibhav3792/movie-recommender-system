@@ -5,7 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
-
+# Models — large files on HF Hub
+models/
 # Distribution / packaging
 .Python
 build/

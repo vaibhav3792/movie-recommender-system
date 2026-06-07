@@ -1,3 +1,4 @@
+from src.content_model import get_content_recommendations
 def get_hybrid_recommendations(user_id, movie, tmdb_ml, svd, tfidf_similarity, glove_similarity, n=5, alpha=0.5):
     content_recs = get_content_recommendations(movie, tmdb_ml, tfidf_similarity, glove_similarity, n=20)
     

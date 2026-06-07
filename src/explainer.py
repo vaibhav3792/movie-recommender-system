@@ -1,3 +1,4 @@
+from src.hybrid_model import get_hybrid_recommendations
 def explain_recommendation(movie1, movie2, movie_details):
     m1 = movie_details[movie_details['title'] == movie1].iloc[0]
     m2 = movie_details[movie_details['title'] == movie2].iloc[0]
