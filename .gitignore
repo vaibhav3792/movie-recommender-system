@@ -217,3 +217,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Raw data files — too large
+data/raw/tmdb_5000_credits.csv
+data/raw/tmdb_5000_movies.csv
