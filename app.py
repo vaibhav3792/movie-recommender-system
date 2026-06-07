@@ -15,21 +15,19 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY", "ecb335ae831a2e50245028df40a84397")
 # ── Load models ─────────────────────────────────────
 @st.cache_resource
 def load_models():
-    movies = pickle.load(open('models/movies.pkl', 'rb'))
-    movie_details = pickle.load(open('models/movie_details.pkl', 'rb'))
     links = pd.read_csv('data/raw/links.csv')
+    
+    movies_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="movies.pkl")
+    details_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="movie_details.pkl")
+    tfidf_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="tfidf_similarity.pkl")
+    glove_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="glove_similarity.pkl")
+    svd_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="svd_model.pkl")
 
-    if os.path.exists('models/tfidf_similarity.pkl'):
-        tfidf_similarity = pickle.load(open('models/tfidf_similarity.pkl', 'rb'))
-        glove_similarity = pickle.load(open('models/glove_similarity.pkl', 'rb'))
-        svd = pickle.load(open('models/svd_model.pkl', 'rb'))
-    else:
-        tfidf_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="tfidf_similarity.pkl")
-        glove_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="glove_similarity.pkl")
-        svd_path = hf_hub_download(repo_id="vaibhav343/movie-recommender-models", filename="svd_model.pkl")
-        tfidf_similarity = pickle.load(open(tfidf_path, 'rb'))
-        glove_similarity = pickle.load(open(glove_path, 'rb'))
-        svd = pickle.load(open(svd_path, 'rb'))
+    movies = pickle.load(open(movies_path, 'rb'))
+    movie_details = pickle.load(open(details_path, 'rb'))
+    tfidf_similarity = pickle.load(open(tfidf_path, 'rb'))
+    glove_similarity = pickle.load(open(glove_path, 'rb'))
+    svd = pickle.load(open(svd_path, 'rb'))
 
     return movies, movie_details, tfidf_similarity, glove_similarity, svd, links
 
