@@ -6,174 +6,218 @@ import pandas as pd
 import os
 from huggingface_hub import hf_hub_download
 from src.content_model import get_content_recommendations
-from src.hybrid_model import get_hybrid_recommendations
-from src.explainer import explain_recommendation, get_recommendations_with_explanation
+from src.explainer import explain_recommendation
 
 # ── Page Config ─────────────────────────────────────
 st.set_page_config(
     page_title="CineAI",
     page_icon="🎬",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# ── Dark Cinematic CSS ───────────────────────────────
+# ── CSS ──────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Background */
-    .stApp {
-        background-color: #0f0f0f;
-        color: #ffffff;
-    }
-    
-    /* Hide default header */
-    header {visibility: hidden;}
-    
-    /* Title */
-    .hero-title {
-        font-size: 3.5rem;
-        font-weight: 900;
-        background: linear-gradient(90deg, #e50914, #ff6b6b);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        padding: 2rem 0 0.5rem 0;
-        letter-spacing: -1px;
-    }
-    
-    .hero-subtitle {
-        text-align: center;
-        color: #888888;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-    /* Search bar */
-    .stTextInput input {
-        background-color: #1a1a1a !important;
-        border: 1px solid #333 !important;
-        border-radius: 8px !important;
-        color: white !important;
-        font-size: 1rem !important;
-        padding: 0.75rem !important;
-    }
+* { font-family: 'Inter', sans-serif; }
 
-    /* Number input */
-    .stNumberInput input {
-        background-color: #1a1a1a !important;
-        border: 1px solid #333 !important;
-        border-radius: 8px !important;
-        color: white !important;
-    }
+.stApp {
+    background-color: #141414;
+    color: #ffffff;
+}
 
-    /* Button */
-    .stButton button {
-        background: linear-gradient(90deg, #e50914, #ff6b6b) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        padding: 0.75rem 2rem !important;
-        width: 100% !important;
-        transition: opacity 0.2s !important;
-    }
+header, footer { visibility: hidden; }
+.block-container { padding: 0 2rem; max-width: 1400px; }
 
-    .stButton button:hover {
-        opacity: 0.85 !important;
-    }
+/* Hero */
+.hero {
+    background: linear-gradient(180deg, #1a1a2e 0%, #141414 100%);
+    padding: 4rem 2rem 3rem 2rem;
+    margin: -1rem -2rem 2rem -2rem;
+    text-align: center;
+    border-bottom: 1px solid #222;
+}
 
-    /* Movie card */
-    .movie-card {
-        background-color: #1a1a1a;
-        border-radius: 12px;
-        padding: 0;
-        overflow: hidden;
-        transition: transform 0.2s;
-        border: 1px solid #222;
-        height: 100%;
-    }
+.hero-logo {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.3rem;
+    color: #e50914;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+}
 
-    .movie-card:hover {
-        transform: translateY(-4px);
-        border-color: #e50914;
-    }
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+}
 
-    .movie-info {
-        padding: 0.75rem;
-    }
+.hero-title span {
+    color: #e50914;
+}
 
-    .movie-title {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin-bottom: 0.25rem;
-        line-height: 1.3;
-    }
+.hero-sub {
+    font-size: 1.1rem;
+    color: #888;
+    font-weight: 400;
+    margin-bottom: 0;
+}
 
-    .movie-score {
-        color: #e50914;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
+/* Search */
+.stSelectbox > div > div {
+    background-color: #1f1f1f !important;
+    border: 1px solid #333 !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-size: 1rem !important;
+}
 
-    .movie-overview {
-        font-size: 0.78rem;
-        color: #aaaaaa;
-        line-height: 1.4;
-        margin-bottom: 0.5rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+.stSelectbox label {
+    color: #888 !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05rem !important;
+}
 
-    .reason-tag {
-        display: inline-block;
-        background-color: #2a2a2a;
-        color: #cccccc;
-        font-size: 0.72rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        margin: 0.1rem;
-        border: 1px solid #333;
-    }
+/* Button */
+.stButton > button {
+    background: #e50914 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    padding: 0.85rem 2.5rem !important;
+    width: 100% !important;
+    letter-spacing: 0.02rem !important;
+    transition: all 0.15s ease !important;
+}
 
-    .rating-badge {
-        display: inline-block;
-        background-color: #f5c518;
-        color: #000000;
-        font-size: 0.78rem;
-        font-weight: 700;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-    }
+.stButton > button:hover {
+    background: #f40612 !important;
+    transform: scale(1.02) !important;
+}
 
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin: 2rem 0 1rem 0;
-        border-left: 4px solid #e50914;
-        padding-left: 0.75rem;
-    }
+/* Section header */
+.section-header {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 2.5rem 0 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 
-    /* Selectbox */
-    .stSelectbox div {
-        background-color: #1a1a1a !important;
-        color: white !important;
-    }
+.section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #222;
+    margin-left: 1rem;
+}
 
-    /* Spinner */
-    .stSpinner {
-        color: #e50914 !important;
-    }
+/* Movie card */
+.movie-card {
+    background: #1f1f1f;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #2a2a2a;
+    transition: all 0.2s ease;
+    height: 100%;
+}
 
-    /* Divider */
-    hr {
-        border-color: #222 !important;
-    }
+.movie-card:hover {
+    border-color: #e50914;
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.movie-poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+
+.movie-body {
+    padding: 1rem;
+}
+
+.movie-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.4rem;
+    line-height: 1.3;
+}
+
+.movie-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.badge-rating {
+    background: #f5c518;
+    color: #000;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.badge-match {
+    background: #e50914;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.movie-overview {
+    font-size: 0.78rem;
+    color: #999;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.reason-chip {
+    background: #2a2a2a;
+    color: #aaa;
+    font-size: 0.68rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    border: 1px solid #333;
+    white-space: nowrap;
+}
+
+/* Spinner */
+div[data-testid="stSpinner"] {
+    color: #e50914 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -184,7 +228,6 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY", "ecb335ae831a2e50245028df40a84397")
 @st.cache_resource
 def load_models():
     links = pd.read_csv('data/raw/links.csv')
-
     if os.path.exists('models/tfidf_similarity.pkl'):
         movies = pickle.load(open('models/movies.pkl', 'rb'))
         movie_details = pickle.load(open('models/movie_details.pkl', 'rb'))
@@ -202,12 +245,11 @@ def load_models():
         tfidf_similarity = pickle.load(open(tfidf_path, 'rb'))
         glove_similarity = pickle.load(open(glove_path, 'rb'))
         svd = pickle.load(open(svd_path, 'rb'))
-
     return movies, movie_details, tfidf_similarity, glove_similarity, svd, links
 
 movies, movie_details, tfidf_similarity, glove_similarity, svd, links = load_models()
 
-# ── TMDB Fetcher ─────────────────────────────────────
+# ── TMDB ─────────────────────────────────────────────
 @st.cache_data
 def get_movie_details_tmdb(movie_id):
     tmdb_id = links[links['movieId'] == movie_id]['tmdbId'].values
@@ -217,73 +259,76 @@ def get_movie_details_tmdb(movie_id):
         url = f"https://api.themoviedb.org/3/movie/{int(tmdb_id[0])}?api_key={TMDB_API_KEY}"
         response = requests.get(url, timeout=5)
         data = response.json()
-        poster = f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '')}" if data.get('poster_path') else None
+        poster = f"https://image.tmdb.org/t/p/w500{data['poster_path']}" if data.get('poster_path') else None
         overview = data.get('overview', '')
         rating = data.get('vote_average', None)
-        return poster, overview, rating
+        return poster, overview, round(rating, 1) if rating else None
     except:
         return None, None, None
 
 # ── Hero ─────────────────────────────────────────────
-st.markdown('<div class="hero-title">🎬 CineAI</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-subtitle">Personalized movie recommendations powered by AI</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="hero">
+    <div class="hero-logo">✦ CineAI</div>
+    <div class="hero-title">Find your next<br><span>favorite film</span></div>
+    <div class="hero-sub">AI-powered recommendations based on what you love</div>
+</div>
+""", unsafe_allow_html=True)
 
-# ── Inputs ───────────────────────────────────────────
-col1, col2, col3 = st.columns([3, 1, 1])
-
+# ── Search ───────────────────────────────────────────
+col1, col2 = st.columns([4, 1])
 with col1:
     movie_list = sorted(movies['title'].values)
-    selected_movie = st.selectbox("🔍 Search for a movie", movie_list)
-
+    selected_movie = st.selectbox("Choose a movie you love", movie_list)
 with col2:
-    user_id = st.number_input("👤 User ID (optional)", min_value=0, step=1, value=0, key="user_id")
-
-with col3:
     st.markdown("<br>", unsafe_allow_html=True)
-    recommend_btn = st.button("Get Recommendations")
+    recommend_btn = st.button("✦ Recommend")
 
 # ── Results ──────────────────────────────────────────
 if recommend_btn:
     with st.spinner("Finding your perfect movies..."):
+        content_recs = get_content_recommendations(
+            selected_movie, movies, tfidf_similarity, glove_similarity
+        )
+        recs = [{'title': t, 'score': s,
+                 'reasons': explain_recommendation(selected_movie, t, movie_details)}
+                for t, s in content_recs]
 
-        if user_id > 0:
-            recs = get_recommendations_with_explanation(
-                user_id, selected_movie, movies, svd,
-                tfidf_similarity, glove_similarity, movie_details
-            )
-        else:
-            content_recs = get_content_recommendations(
-                selected_movie, movies, tfidf_similarity, glove_similarity
-            )
-            recs = [{'title': t, 'score': s, 'reasons': explain_recommendation(selected_movie, t, movie_details)}
-                    for t, s in content_recs]
+    st.markdown(f'<div class="section-header">Because you liked <em>{selected_movie}</em></div>',
+                unsafe_allow_html=True)
 
-        st.markdown(f'<div class="section-title">Top picks for "{selected_movie}"</div>', unsafe_allow_html=True)
+    cols = st.columns(5)
+    for idx, rec in enumerate(recs):
+        with cols[idx]:
+            movie_id = movies[movies['title'] == rec['title']]['movieId'].values
+            poster, overview, rating = None, '', None
+            if len(movie_id) > 0:
+                poster, overview, rating = get_movie_details_tmdb(int(movie_id[0]))
 
-        cols = st.columns(5)
-        for idx, rec in enumerate(recs):
-            with cols[idx]:
-                movie_id = movies[movies['title'] == rec['title']]['movieId'].values
-                poster, overview, rating = None, '', None
-                if len(movie_id) > 0:
-                    poster, overview, rating = get_movie_details_tmdb(movie_id[0])
+            card_html = f"""
+            <div class="movie-card">
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
 
-                # Poster
-                if poster:
-                    st.image(poster, use_container_width=True)
-                else:
-                    st.image("https://via.placeholder.com/300x450/1a1a1a/666666?text=No+Poster", use_container_width=True)
+            if poster:
+                st.image(poster, use_column_width=True)
+            else:
+                st.markdown('<div class="movie-poster-placeholder">🎬</div>', unsafe_allow_html=True)
 
-                # Info
-                st.markdown(f'<div class="movie-title">{rec["title"]}</div>', unsafe_allow_html=True)
+            match_pct = round(rec['score'] * 100)
+            rating_badge = f'<span class="badge-rating">⭐ {rating}</span>' if rating else ''
+            reasons_html = ''.join([f'<span class="reason-chip">{r}</span>' for r in rec['reasons']])
+            overview_text = overview[:150] + '...' if overview else ''
 
-                if rating:
-                    st.markdown(f'<span class="rating-badge">⭐ {round(rating, 1)}</span>', unsafe_allow_html=True)
-
-                st.markdown(f'<div class="movie-score">Match: {round(rec["score"] * 100)}%</div>', unsafe_allow_html=True)
-
-                if overview:
-                    st.markdown(f'<div class="movie-overview">{overview[:150]}...</div>', unsafe_allow_html=True)
-
-                reasons_html = ''.join([f'<span class="reason-tag">{r}</span>' for r in rec['reasons']])
-                st.markdown(f'<div>{reasons_html}</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="movie-body">
+                <div class="movie-title">{rec['title']}</div>
+                <div class="movie-meta">
+                    {rating_badge}
+                    <span class="badge-match">{match_pct}% match</span>
+                </div>
+                <div class="movie-overview">{overview_text}</div>
+                <div class="reasons">{reasons_html}</div>
+            </div>
+            </div>
+            """, unsafe_allow_html=True)
