@@ -222,7 +222,7 @@ div[data-testid="stSpinner"] {
 """, unsafe_allow_html=True)
 
 # ── Config ───────────────────────────────────────────
-TMDB_API_KEY = os.environ["TMDB_API_K
+TMDB_API_KEY = os.environ["TMDB_API_KEY"]
 
 # ── Load Models ──────────────────────────────────────
 @st.cache_resource
